@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "mongo-db.fullname" . }}
+  labels:
+    {{- include "mongo-db.labels" . | nindent 4 }}
+spec:
+  {{- with .Values.persitentStorage.accessModes }}
+  accessModes:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  storageClassName: {{ .Values.persitentStorage.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.persitentStorage.resources.requests.storage }}
+
+

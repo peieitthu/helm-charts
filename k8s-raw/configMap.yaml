@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-webserver
+  namespace: dev
+  labels:
+    app: nginx-webserver
+    env: local-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-webserver
+      env: local-dev
+  template:
+    metadata:
+      labels:
+        app: nginx-webserver
+        env: local-dev
+    spec:
+      containers:
+        - name: nginx-nonroot-server
+          image: devdocker-repo.frontiir.net/container-images/nginx:nonroot-stable
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /usr/share/nginx/html/index.html
+              name: vol-configmap-nginx
+              subPath: index.html
+      volumes:
+        - name: vol-configmap-nginx
+          configMap:
+            name: nginx-html-file
+      imagePullSecrets:
+        - name: registry-frontiir-net

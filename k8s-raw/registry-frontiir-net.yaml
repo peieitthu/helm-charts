@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-webserver
+  namespace: dev
+  labels:
+    app: nginx-webserver
+    env: local-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-webserver
+      env: local-dev
+  template:
+    metadata:
+      labels:
+        app: nginx-webserver
+        env: local-dev
+    spec:
+      containers:
+        - name: nginx-nonroot-server
+          image: devdocker-repo.frontiir.net/container-images/nginx:nonroot-stable
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+      imagePullSecrets:
+        - name: registry-frontiir-net
+      
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-webserver
+  namespace: dev
+  labels:
+    app: nginx-webserver
+    env: local-dev
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: nginx-webserver
+    env: local-dev
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-webserver
+  namespace: dev
+  labels:
+    app: nginx-webserver
+    env: local-dev
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: nginx-server-example.local
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: nginx-webserver
+                port:
+                  name: http
+  tls:
+    - hosts:
+        - nginx-server-example.frontiir.net
+      secretName: tls-frontiir-net-godaddy-cert
+
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-html-file
+  namespace: dev
+data:
+  index.html: |-
+    <!DOCTYPE html>
+    <html>
+       <head>
+          <title>Welcome to NGINX Web Server</title>
+          <style>
+             html { color-scheme: light dark; }
+             body { width: 35em; margin: 0 auto;
+             font-family: Tahoma, Verdana, Arial, sans-serif; }
+          </style>
+       </head>
+       <body>
+          <h1>Welcome to NGINX Web Server</h1>
+          <p>If you see this page, the nginx web server is successfully installed and
+             working. Further configuration is required.
+          </p>
+          <p>For online documentation and support please refer to
+             <a href="http://nginx.org/">nginx.org</a>.<br/>
+             Commercial support is available at
+             <a href="http://nginx.com/">nginx.com</a>.
+          </p>
+          <p><em>Thank you for using nginx.</em></p>
+       </body>
+    </html>    
